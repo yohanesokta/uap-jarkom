@@ -3,7 +3,14 @@ import 'package:flutter/material.dart';
 
 class AppConstants {
   static final Uint8List containerMagicBytes = Uint8List.fromList([
-    0x45, 0x58, 0x41, 0x4D, 0x45, 0x4E, 0x43, 0x01
+    0x45,
+    0x58,
+    0x41,
+    0x4D,
+    0x45,
+    0x4E,
+    0x43,
+    0x01,
   ]);
 
   static const int currentFormatVersion = 1;
@@ -14,7 +21,8 @@ class AppConstants {
   static const int keyIdentifierByteLength = 16;
 
   static const String backupFileExtension = '.examenc';
-  static const String defaultApiBaseUrl = 'http://127.0.0.1:8787';
+  static const String defaultApiBaseUrl =
+      'https://packet-tracer-exam-api.oktanio.workers.dev';
 
   static const Color slateBackground = Color(0xFF1E1E2E);
   static const Color slateSurface = Color(0xFF26283D);

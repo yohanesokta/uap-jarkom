@@ -103,6 +103,77 @@ class _PreparationScreenState extends State<PreparationScreen> {
     }
   }
 
+  Future<void> _showManualPathDialog() async {
+    final controller = TextEditingController(
+      text: widget.appState.detectionResult?.executablePath ?? '',
+    );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppConstants.slateSurface,
+        title: const Text(
+          'Tentukan Lokasi Packet Tracer',
+          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Masukkan jalur absolut executable Packet Tracer:',
+              style: TextStyle(color: AppConstants.textMuted, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: const InputDecoration(
+                hintText: '/opt/pt/packettracer.AppImage',
+                filled: true,
+                fillColor: AppConstants.slateCard,
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal', style: TextStyle(color: AppConstants.textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.coralAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Simpan & Gunakan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && controller.text.trim().isNotEmpty) {
+      final customPath = controller.text.trim();
+      final file = File(customPath);
+      if (await file.exists()) {
+        widget.appState.detectionResult = PacketTracerDetectionResult(
+          isInstalled: true,
+          executablePath: customPath,
+          detectedVersion: 'Manual: $customPath',
+        );
+        setState(() {
+          _errorMessage = null;
+        });
+        await _prepareEnvironment();
+      } else {
+        setState(() {
+          _errorMessage = 'Berkas di jalur "$customPath" tidak ditemukan.';
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = widget.appState.sessionResult;
@@ -207,16 +278,34 @@ class _PreparationScreenState extends State<PreparationScreen> {
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: const TextStyle(
-                                    color: Colors.redAccent,
-                                    fontSize: 13,
+                              Row(
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: _showManualPathDialog,
+                                icon: const Icon(Icons.folder_open, size: 16),
+                                label: const Text('Tentukan Lokasi Packet Tracer Manual'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  side: const BorderSide(color: AppConstants.slateBorder),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
                               ),
