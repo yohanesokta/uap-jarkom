@@ -136,3 +136,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+
+INSERT OR IGNORE INTO administrators (id, username, email, password_hash, full_name, role)
+VALUES ('admin_default', 'admin', 'admin@kampus.ac.id', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Dosen Pengampu', 'ADMINISTRATOR');

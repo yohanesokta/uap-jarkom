@@ -9,6 +9,7 @@ import {
   packagePkaFileIntoExamContainer,
   unpackExamContainerToPkaFile,
   calculateSha256Hex,
+  deriveSessionKeyHex,
   generateRandomBytes
 } from "../src/crypto.js";
 import { AuthenticatedMetadata } from "@packet-tracer-exam/exam-format";
@@ -114,5 +115,15 @@ describe("Worker Crypto Service Unit Tests", () => {
     assert.deepEqual(pkaFileBytes, dummyPkaBytes);
     assert.equal(metadata.examId, fullMetadata.examId);
     assert.equal(metadata.originalSha256, originalHash);
+  });
+
+  it("should derive deterministic session keys via HKDF", async () => {
+    const keyHex1 = await deriveSessionKeyHex(masterSecretHex, "session_test_xyz");
+    const keyHex2 = await deriveSessionKeyHex(masterSecretHex, "session_test_xyz");
+    const keyHexDifferentSession = await deriveSessionKeyHex(masterSecretHex, "session_test_abc");
+
+    assert.equal(keyHex1, keyHex2);
+    assert.notEqual(keyHex1, keyHexDifferentSession);
+    assert.equal(keyHex1.length, 64);
   });
 });

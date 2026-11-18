@@ -5,7 +5,7 @@ compatibility_date = "2024-11-18"
 [[d1_databases]]
 binding = "DB"
 database_name = "exam-database"
-database_id = "exam-database-local-id"
+database_id = "8b588ca4-a980-4e57-8f48-dc34285f088e"
 migrations_dir = "migrations"
 
 [[r2_buckets]]

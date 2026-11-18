@@ -1,6 +1,9 @@
 import {
   calculateSha256Hex,
+  decryptExamPayload,
   deriveMasterCryptoKey,
+  deriveSessionCryptoKey,
+  deriveSessionKeyHex,
   generateRandomBytes,
   hexStringToUint8Array,
   packagePkaFileIntoExamContainer,
@@ -245,21 +248,33 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
       const masterKey = await deriveMasterCryptoKey(masterSecret);
       const dek = await unwrapDataEncryptionKey(parsed.header.wrappedDek, masterKey);
 
-      const sessionKey = generateRandomBytes(32);
-      const sessionCryptoKey = await crypto.subtle.importKey(
-        "raw",
-        sessionKey,
-        { name: "AES-GCM" },
-        false,
-        ["encrypt"]
-      );
+      let requestedSessionId = "";
+      try {
+        const body = (await request.json()) as { sessionId?: string };
+        requestedSessionId = body.sessionId || "";
+      } catch (_) {}
+
+      const sessionKeyHex = requestedSessionId
+        ? await deriveSessionKeyHex(masterSecret, requestedSessionId)
+        : uint8ArrayToHexString(generateRandomBytes(32));
+
+      const sessionCryptoKey = requestedSessionId
+        ? await deriveSessionCryptoKey(masterSecret, requestedSessionId)
+        : await crypto.subtle.importKey(
+            "raw",
+            hexStringToUint8Array(sessionKeyHex),
+            { name: "AES-GCM" },
+            false,
+            ["encrypt"]
+          );
+
       const sessionWrappedDek = await wrapDataEncryptionKey(dek, sessionCryptoKey);
 
       return jsonResponse({
         success: true,
         data: {
           examId: exam.id,
-          sessionKeyHex: uint8ArrayToHexString(sessionKey),
+          sessionKeyHex: sessionKeyHex,
           sessionWrappedDekHex: uint8ArrayToHexString(sessionWrappedDek),
           containerBase64: uint8ArrayToHexString(containerBytes)
         }
@@ -521,6 +536,27 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
         return errorResponse("INVALID_INPUT", "title, classId, durationMinutes, pkaBase64 are required");
       }
 
+      const targetClass = await db.findClassById(body.classId);
+      if (!targetClass) {
+        return errorResponse("CLASS_NOT_FOUND", "Kelompok kelas yang dipilih tidak ditemukan di basis data", 404);
+      }
+
+      let admin = await db.findAdministratorById("admin_default");
+      if (!admin) {
+        const defaultPasswordHash = await calculateSha256Hex(new TextEncoder().encode("admin123"));
+        admin = {
+          id: "admin_default",
+          username: "admin",
+          email: "admin@kampus.ac.id",
+          password_hash: defaultPasswordHash,
+          full_name: "Dosen Pengampu",
+          role: "ADMINISTRATOR",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        await db.createAdministrator(admin);
+      }
+
       let pkaBytes: Uint8Array;
       if (/^[0-9a-fA-F]+$/.test(body.pkaBase64)) {
         pkaBytes = hexStringToUint8Array(body.pkaBase64);
@@ -663,21 +699,43 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
 
       const containerBytes = new Uint8Array(await storedObject.arrayBuffer());
       const parsed = decodeExamContainer(containerBytes);
-      const masterKey = await deriveMasterCryptoKey(masterSecret);
-      const dek = await unwrapDataEncryptionKey(parsed.header.wrappedDek, masterKey);
+      const sessionId = parsed.header.authenticatedMetadata.sessionId || submission.session_id;
+
+      let dek: Uint8Array | null = null;
+      if (sessionId) {
+        try {
+          const sessionKey = await deriveSessionCryptoKey(masterSecret, sessionId);
+          dek = await unwrapDataEncryptionKey(parsed.header.wrappedDek, sessionKey);
+        } catch (_) {}
+      }
+
+      if (!dek) {
+        try {
+          const masterKey = await deriveMasterCryptoKey(masterSecret);
+          dek = await unwrapDataEncryptionKey(parsed.header.wrappedDek, masterKey);
+        } catch (_) {}
+      }
+
+      if (!dek) {
+        return errorResponse("DECRYPTION_FAILED", "Gagal membuka kunci dekripsi berkas jawaban", 500);
+      }
 
       const decryptedPka = await decryptExamPayload(
         parsed.encryptedPayload,
         parsed.authenticationTag,
         dek,
         parsed.header.nonce,
-        parsed.header.authenticatedMetadata
+        parsed.header.authenticatedMetadataRaw
       );
 
       return new Response(decryptedPka, {
         headers: {
           "Content-Type": "application/octet-stream",
-          "Content-Disposition": `attachment; filename="${submission.student_id}_answer.pka"`
+          "Content-Disposition": `attachment; filename="${submission.student_id}_answer.pka"`,
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Access-Control-Expose-Headers": "Content-Disposition"
         }
       });
     }

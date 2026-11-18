@@ -2,7 +2,15 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { handleRequest } from "../src/router.js";
 import { Env } from "../src/types.js";
-import { calculateSha256Hex, uint8ArrayToHexString } from "../src/crypto.js";
+import {
+  calculateSha256Hex,
+  encryptExamPayload,
+  generateRandomBytes,
+  hexStringToUint8Array,
+  uint8ArrayToHexString,
+  wrapDataEncryptionKey
+} from "../src/crypto.js";
+import { encodeExamContainer } from "@packet-tracer-exam/exam-format";
 
 class InMemoryD1PreparedStatement {
   constructor(
@@ -337,11 +345,47 @@ describe("End-to-End Worker API REST Routes", () => {
     const initSubResult = await initSubResponse.json() as any;
     const submissionId = initSubResult.data.submissionId;
 
-    const dummyAnswerContainer = new TextEncoder().encode("MOCK_ENCRYPTED_ANSWER_EXAMENC_BINARY");
+    const studentAnswerPka = new TextEncoder().encode("COMPLETED_STUDENT_PKA_NETWORK_TOPOLOGY");
+    const answerSha256 = await calculateSha256Hex(studentAnswerPka);
+    const sessionKey = await crypto.subtle.importKey(
+      "raw",
+      hexStringToUint8Array(downloadResult.data.sessionKeyHex),
+      { name: "AES-GCM" },
+      false,
+      ["encrypt", "decrypt"]
+    );
+
+    const answerDek = generateRandomBytes(32);
+    const answerNonce = generateRandomBytes(12);
+    const answerWrappedDek = await wrapDataEncryptionKey(answerDek, sessionKey);
+    const answerMetadata = {
+      sessionId,
+      examId,
+      studentNim: "210001001",
+      timestamp: Date.now(),
+      originalSha256: answerSha256,
+      purpose: "EXAM_SUBMISSION" as const
+    };
+    const { ciphertext, authenticationTag } = await encryptExamPayload(
+      studentAnswerPka,
+      answerDek,
+      answerNonce,
+      answerMetadata
+    );
+    const answerContainer = encodeExamContainer({
+      keyIdentifier: generateRandomBytes(16),
+      nonce: answerNonce,
+      originalFileSize: studentAnswerPka.byteLength,
+      wrappedDek: answerWrappedDek,
+      authenticatedMetadata: answerMetadata,
+      encryptedPayload: ciphertext,
+      authenticationTag
+    });
+
     const uploadRequest = new Request(`https://api.internal/api/v1/submissions/${submissionId}/upload`, {
       method: "PUT",
       headers: { "Content-Type": "application/octet-stream" },
-      body: dummyAnswerContainer
+      body: answerContainer
     });
     const uploadResponse = await handleRequest(uploadRequest, testEnv);
     assert.equal(uploadResponse.status, 200);
@@ -353,5 +397,64 @@ describe("End-to-End Worker API REST Routes", () => {
     assert.equal(completeResponse.status, 200);
     const completeResult = await completeResponse.json() as any;
     assert.equal(completeResult.data.status, "COMPLETED");
+
+    const adminDownloadRequest = new Request(`https://api.internal/api/v1/admin/submissions/${submissionId}/download`, {
+      method: "GET"
+    });
+    const adminDownloadResponse = await handleRequest(adminDownloadRequest, testEnv);
+    assert.equal(adminDownloadResponse.status, 200);
+    assert.equal(adminDownloadResponse.headers.get("Access-Control-Allow-Origin"), "*");
+    assert.equal(adminDownloadResponse.headers.get("Access-Control-Expose-Headers"), "Content-Disposition");
+    const decryptedBytes = new Uint8Array(await adminDownloadResponse.arrayBuffer());
+    assert.deepEqual(decryptedBytes, studentAnswerPka);
+  });
+
+  it("should reject exam creation with 404 if class does not exist", async () => {
+    const samplePkaBytes = new TextEncoder().encode("SAMPLE_CONTENT");
+    const createExamRequest = new Request("https://api.internal/api/v1/admin/exams", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Ujian Invalid Class",
+        classId: "class_non_existent",
+        durationMinutes: 60,
+        pkaBase64: uint8ArrayToHexString(samplePkaBytes)
+      })
+    });
+
+    const response = await handleRequest(createExamRequest, testEnv);
+    assert.equal(response.status, 404);
+    const result = await response.json() as any;
+    assert.equal(result.success, false);
+    assert.equal(result.error.code, "CLASS_NOT_FOUND");
+  });
+
+  it("should automatically ensure default administrator exists when creating exam", async () => {
+    const createClassRequest = new Request("https://api.internal/api/v1/admin/classes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: "TI-1A", name: "Kelas 1A" })
+    });
+    const classResponse = await handleRequest(createClassRequest, testEnv);
+    const classResult = await classResponse.json() as any;
+    const classId = classResult.data.id;
+
+    const samplePkaBytes = new TextEncoder().encode("SAMPLE_CONTENT");
+    const createExamRequest = new Request("https://api.internal/api/v1/admin/exams", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Ujian Mandiri",
+        classId,
+        durationMinutes: 60,
+        pkaBase64: uint8ArrayToHexString(samplePkaBytes)
+      })
+    });
+
+    const response = await handleRequest(createExamRequest, testEnv);
+    assert.equal(response.status, 201);
+    const result = await response.json() as any;
+    assert.equal(result.success, true);
+    assert.equal(result.data.created_by, "admin_default");
   });
 });

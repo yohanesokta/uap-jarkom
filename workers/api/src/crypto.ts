@@ -57,6 +57,53 @@ export async function deriveMasterCryptoKey(masterSecret: string): Promise<Crypt
   );
 }
 
+export async function deriveSessionCryptoKey(
+  masterSecret: string,
+  sessionId: string
+): Promise<CryptoKey> {
+  let masterKeyBytes: Uint8Array;
+  if (/^[0-9a-fA-F]{64}$/.test(masterSecret)) {
+    masterKeyBytes = hexStringToUint8Array(masterSecret);
+  } else {
+    const rawSecretBytes = new TextEncoder().encode(masterSecret);
+    const hash = await crypto.subtle.digest("SHA-256", rawSecretBytes);
+    masterKeyBytes = new Uint8Array(hash);
+  }
+
+  const baseHkdfKey = await crypto.subtle.importKey(
+    "raw",
+    masterKeyBytes,
+    { name: "HKDF" },
+    false,
+    ["deriveKey"]
+  );
+
+  const saltBytes = new TextEncoder().encode(sessionId);
+  const infoBytes = new TextEncoder().encode("EXAM_SESSION_KEY");
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: "HKDF",
+      hash: "SHA-256",
+      salt: saltBytes,
+      info: infoBytes
+    },
+    baseHkdfKey,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"]
+  );
+}
+
+export async function deriveSessionKeyHex(
+  masterSecret: string,
+  sessionId: string
+): Promise<string> {
+  const sessionKey = await deriveSessionCryptoKey(masterSecret, sessionId);
+  const rawKeyBytes = await crypto.subtle.exportKey("raw", sessionKey);
+  return uint8ArrayToHexString(new Uint8Array(rawKeyBytes));
+}
+
 export async function wrapDataEncryptionKey(
   dek: Uint8Array,
   masterKey: CryptoKey
@@ -141,7 +188,7 @@ export async function decryptExamPayload(
   authenticationTag: Uint8Array,
   dek: Uint8Array,
   nonce: Uint8Array,
-  authenticatedMetadata: AuthenticatedMetadata
+  authenticatedMetadata: AuthenticatedMetadata | Uint8Array
 ): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
@@ -155,8 +202,10 @@ export async function decryptExamPayload(
   combinedCiphertextAndTag.set(ciphertext, 0);
   combinedCiphertextAndTag.set(authenticationTag, ciphertext.length);
 
-  const metadataJsonString = JSON.stringify(authenticatedMetadata);
-  const additionalDataBytes = new TextEncoder().encode(metadataJsonString);
+  const additionalDataBytes =
+    authenticatedMetadata instanceof Uint8Array
+      ? authenticatedMetadata
+      : new TextEncoder().encode(JSON.stringify(authenticatedMetadata));
 
   const decryptedBuffer = await crypto.subtle.decrypt(
     {
