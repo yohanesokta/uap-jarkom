@@ -1,0 +1,14 @@
+{
+  "name": "packet-tracer-exam-system",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "workers/*",
+    "apps/dashboard"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  }
+}
