@@ -1,0 +1,22 @@
+{
+  "name": "@packet-tracer-exam/api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "@packet-tracer-exam/exam-format": "file:../../packages/exam-format"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.93.0"
+  }
+}

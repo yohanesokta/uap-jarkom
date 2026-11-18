@@ -1,0 +1,16 @@
+name = "packet-tracer-exam-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "exam-database"
+database_id = "exam-database-local-id"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "exam-storage-bucket"
+
+[vars]
+ENVIRONMENT = "development"

@@ -1,0 +1,11 @@
+export const EXAM_CONTAINER_MAGIC_BYTES = new Uint8Array([
+  0x45, 0x58, 0x41, 0x4d, 0x45, 0x4e, 0x43, 0x01
+]);
+
+export const CURRENT_FORMAT_VERSION = 1;
+export const ALGORITHM_IDENTIFIER_AES_256_GCM = 1;
+
+export const FIXED_HEADER_BYTE_LENGTH = 64;
+export const AUTHENTICATION_TAG_BYTE_LENGTH = 16;
+export const NONCE_BYTE_LENGTH = 12;
+export const KEY_IDENTIFIER_BYTE_LENGTH = 16;
