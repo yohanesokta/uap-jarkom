@@ -87,14 +87,16 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
 
       setState(() {
         _uploadingFilePath = null;
-        _statusNotification = 'Cadangan ${backup.fileName} berhasil diunggah ulang!';
+        _statusNotification =
+            'Cadangan ${backup.fileName} berhasil diunggah ulang!';
       });
 
       await _loadBackups();
     } catch (error) {
       setState(() {
         _uploadingFilePath = null;
-        _statusNotification = 'Gagal mengunggah: ${error.toString().replaceFirst("Exception: ", "")}';
+        _statusNotification =
+            'Gagal mengunggah: ${error.toString().replaceFirst("Exception: ", "")}';
       });
     }
   }
@@ -108,7 +110,11 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
         elevation: 0,
         title: const Text(
           'Pusat Pemulihan Cadangan Ujian Lokal',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppConstants.textPrimary),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppConstants.textPrimary,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppConstants.textPrimary),
@@ -139,12 +145,20 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.shield_outlined, color: AppConstants.coralAccent, size: 24),
+                      const Icon(
+                        Icons.shield_outlined,
+                        color: AppConstants.coralAccent,
+                        size: 24,
+                      ),
                       const SizedBox(width: 14),
                       const Expanded(
                         child: Text(
-                          'Berkas cadangan (.examenc) terenkripsi secara mandiri menggunakan AES-256-GCM. Jika koneksi terputus saat ujian, Anda dapat mengunggahnya kapan saja melalui layar ini tanpa perlu mengulang ujian.',
-                          style: TextStyle(fontSize: 13, color: AppConstants.textMuted, height: 1.4),
+                          'Berkas cadangan (.examenc) terenkripsi secara mandiri. Jika koneksi terputus saat ujian, Anda dapat mengunggahnya kapan saja melalui layar ini tanpa perlu mengulang ujian.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppConstants.textMuted,
+                            height: 1.4,
+                          ),
                         ),
                       ),
                     ],
@@ -157,11 +171,16 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
                     decoration: BoxDecoration(
                       color: AppConstants.coralAccent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppConstants.coralAccent.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: AppConstants.coralAccent.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       _statusNotification!,
-                      style: const TextStyle(fontSize: 13, color: AppConstants.coralAccent),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppConstants.coralAccent,
+                      ),
                     ),
                   ),
                 ],
@@ -170,115 +189,145 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
                   child: _isLoading
                       ? const Center(
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(AppConstants.coralAccent),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppConstants.coralAccent,
+                            ),
                           ),
                         )
                       : _backups.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(Icons.inventory_2_outlined, size: 48, color: AppConstants.textMuted),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    'Tidak ada berkas cadangan lokal.',
-                                    style: TextStyle(color: AppConstants.textMuted, fontSize: 14),
-                                  ),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 48,
+                                color: AppConstants.textMuted,
                               ),
-                            )
-                          : ListView.separated(
-                              itemCount: _backups.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                final backup = _backups[index];
-                                final isCurrentlyUploading = _uploadingFilePath == backup.filePath;
+                              SizedBox(height: 12),
+                              Text(
+                                'Tidak ada berkas cadangan lokal.',
+                                style: TextStyle(
+                                  color: AppConstants.textMuted,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: _backups.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final backup = _backups[index];
+                            final isCurrentlyUploading =
+                                _uploadingFilePath == backup.filePath;
 
-                                return Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.slateSurface,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppConstants.slateSurface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: backup.isCorrupted
+                                      ? Colors.redAccent.withValues(alpha: 0.3)
+                                      : AppConstants.slateBorder,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
                                       color: backup.isCorrupted
-                                          ? Colors.redAccent.withValues(alpha: 0.3)
-                                          : AppConstants.slateBorder,
+                                          ? Colors.redAccent.withValues(
+                                              alpha: 0.12,
+                                            )
+                                          : AppConstants.slateCard,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      backup.isCorrupted
+                                          ? Icons.broken_image_outlined
+                                          : Icons.lock_outline,
+                                      color: backup.isCorrupted
+                                          ? Colors.redAccent
+                                          : AppConstants.cyanStatus,
+                                      size: 20,
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: backup.isCorrupted
-                                              ? Colors.redAccent.withValues(alpha: 0.12)
-                                              : AppConstants.slateCard,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Icon(
-                                          backup.isCorrupted
-                                              ? Icons.broken_image_outlined
-                                              : Icons.lock_outline,
-                                          color: backup.isCorrupted
-                                              ? Colors.redAccent
-                                              : AppConstants.cyanStatus,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              backup.fileName,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'NIM: ${backup.studentNim} • ${(backup.fileSizeBytes / 1024).toStringAsFixed(1)} KB • ${backup.timestamp.toLocal().toString().split(".")[0]}',
-                                              style: const TextStyle(fontSize: 11, color: AppConstants.textMuted),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      if (isCurrentlyUploading)
-                                        const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(AppConstants.coralAccent),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          backup.fileName,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
                                           ),
-                                        )
-                                      else
-                                        ElevatedButton.icon(
-                                          onPressed: backup.isCorrupted
-                                              ? null
-                                              : () => _retryUploadBackup(backup),
-                                          icon: const Icon(Icons.upload, size: 16),
-                                          label: const Text('Unggah Ulang', style: TextStyle(fontSize: 12)),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppConstants.coralAccent,
-                                            foregroundColor: Colors.white,
-                                            disabledBackgroundColor: AppConstants.slateCard,
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'NIM: ${backup.studentNim} • ${(backup.fileSizeBytes / 1024).toStringAsFixed(1)} KB • ${backup.timestamp.toLocal().toString().split(".")[0]}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppConstants.textMuted,
                                           ),
                                         ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                );
-                              },
-                            ),
+                                  const SizedBox(width: 12),
+                                  if (isCurrentlyUploading)
+                                    const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppConstants.coralAccent,
+                                            ),
+                                      ),
+                                    )
+                                  else
+                                    ElevatedButton.icon(
+                                      onPressed: backup.isCorrupted
+                                          ? null
+                                          : () => _retryUploadBackup(backup),
+                                      icon: const Icon(Icons.upload, size: 16),
+                                      label: const Text(
+                                        'Unggah Ulang',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            AppConstants.coralAccent,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor:
+                                            AppConstants.slateCard,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

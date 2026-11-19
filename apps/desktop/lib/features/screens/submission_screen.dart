@@ -51,7 +51,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
     try {
       final pkaFile = widget.appState.localPlaintextPkaFile;
       if (pkaFile == null || !await pkaFile.exists()) {
-        throw Exception('Berkas pengerjaan .pka tidak ditemukan di direktori kerja');
+        throw Exception(
+          'Berkas pengerjaan .pka tidak ditemukan di direktori kerja',
+        );
       }
 
       final pkaBytes = await pkaFile.readAsBytes();
@@ -61,24 +63,27 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
 
       setState(() {
         _isFileVerified = true;
-        _currentStepText = 'Menghitung checksum SHA-256 dan mengenkripsi jawaban (AES-256-GCM)...';
+        _currentStepText =
+            'Menghitung checksum SHA-256 dan mengenkripsi jawaban (AES-256-GCM)...';
       });
 
       final session = widget.appState.sessionResult!;
       final originalSha256 = widget.cryptoService.calculateSha256Hex(pkaBytes);
       widget.appState.originalFileSha256 = originalSha256;
 
-      final encryptedContainer = await widget.cryptoService.createEncryptedAnswerContainer(
-        completedPkaBytes: pkaBytes,
-        examId: session.examId,
-        sessionId: session.sessionId,
-        studentNim: widget.appState.nim,
-        sessionKeyHex: widget.appState.sessionKeyHex!,
-      );
+      final encryptedContainer = await widget.cryptoService
+          .createEncryptedAnswerContainer(
+            completedPkaBytes: pkaBytes,
+            examId: session.examId,
+            sessionId: session.sessionId,
+            studentNim: widget.appState.nim,
+            sessionKeyHex: widget.appState.sessionKeyHex!,
+          );
 
       setState(() {
         _isEncrypted = true;
-        _currentStepText = 'Menyimpan berkas cadangan lokal terenkripsi (.examenc)...';
+        _currentStepText =
+            'Menyimpan berkas cadangan lokal terenkripsi (.examenc)...';
       });
 
       final backupFile = await widget.storageManager.saveEncryptedLocalBackup(
@@ -119,11 +124,14 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
         _currentStepText = 'Membersihkan berkas plaintext sementara...';
       });
 
-      await widget.storageManager.safelyDeleteTemporaryWorkspace(session.sessionId);
+      await widget.storageManager.safelyDeleteTemporaryWorkspace(
+        session.sessionId,
+      );
 
       setState(() {
         _isFinished = true;
-        _currentStepText = 'Jawaban ujian berhasil dikumpulkan dan diverifikasi.';
+        _currentStepText =
+            'Jawaban ujian berhasil dikumpulkan dan diverifikasi.';
       });
     } catch (error) {
       setState(() {
@@ -160,15 +168,19 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                         color: _isFinished
                             ? AppConstants.greenSuccess.withValues(alpha: 0.12)
                             : (_errorMessage != null
-                                ? Colors.redAccent.withValues(alpha: 0.12)
-                                : AppConstants.coralAccent.withValues(alpha: 0.12)),
+                                  ? Colors.redAccent.withValues(alpha: 0.12)
+                                  : AppConstants.coralAccent.withValues(
+                                      alpha: 0.12,
+                                    )),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: _isFinished
                               ? AppConstants.greenSuccess.withValues(alpha: 0.4)
                               : (_errorMessage != null
-                                  ? Colors.redAccent.withValues(alpha: 0.4)
-                                  : AppConstants.coralAccent.withValues(alpha: 0.4)),
+                                    ? Colors.redAccent.withValues(alpha: 0.4)
+                                    : AppConstants.coralAccent.withValues(
+                                        alpha: 0.4,
+                                      )),
                           width: 1.5,
                         ),
                       ),
@@ -176,14 +188,14 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                         _isFinished
                             ? Icons.check_circle_outline
                             : (_errorMessage != null
-                                ? Icons.warning_amber_rounded
-                                : Icons.cloud_upload_outlined),
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.cloud_upload_outlined),
                         size: 34,
                         color: _isFinished
                             ? AppConstants.greenSuccess
                             : (_errorMessage != null
-                                ? Colors.redAccent
-                                : AppConstants.coralAccent),
+                                  ? Colors.redAccent
+                                  : AppConstants.coralAccent),
                       ),
                     ),
                   ),
@@ -191,7 +203,9 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                   Text(
                     _isFinished
                         ? 'Pengumpulan Berhasil!'
-                        : (_errorMessage != null ? 'Pengunggahan Tertunda' : 'Memproses Pengumpulan'),
+                        : (_errorMessage != null
+                              ? 'Pengunggahan Tertunda'
+                              : 'Memproses Pengumpulan'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 20,
@@ -205,17 +219,28 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
-                      color: _errorMessage != null ? Colors.redAccent.shade100 : AppConstants.textMuted,
+                      color: _errorMessage != null
+                          ? Colors.redAccent.shade100
+                          : AppConstants.textMuted,
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildProgressItem('1. Verifikasi Berkas PKA Jawaban', _isFileVerified),
+                  _buildProgressItem(
+                    '1. Verifikasi Berkas PKA Jawaban',
+                    _isFileVerified,
+                  ),
                   const SizedBox(height: 10),
-                  _buildProgressItem('2. Enkripsi Jawaban (AES-256-GCM)', _isEncrypted),
+                  _buildProgressItem('2. Enkripsi Jawaban', _isEncrypted),
                   const SizedBox(height: 10),
-                  _buildProgressItem('3. Cadangan Lokal Aman (.examenc)', _isBackupSaved),
+                  _buildProgressItem(
+                    '3. Cadangan Lokal Aman (.examenc)',
+                    _isBackupSaved,
+                  ),
                   const SizedBox(height: 10),
-                  _buildProgressItem('4. Unggah & Verifikasi Server', _isUploaded),
+                  _buildProgressItem(
+                    '4. Unggah & Verifikasi Server',
+                    _isUploaded,
+                  ),
                   if (_isFinished) ...[
                     const SizedBox(height: 24),
                     Container(
@@ -223,7 +248,11 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                       decoration: BoxDecoration(
                         color: AppConstants.slateCard,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppConstants.greenSuccess.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: AppConstants.greenSuccess.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,13 +267,25 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          _buildReceiptField('ID Submisi', widget.appState.completedSubmissionId ?? '-'),
+                          _buildReceiptField(
+                            'ID Submisi',
+                            widget.appState.completedSubmissionId ?? '-',
+                          ),
                           const SizedBox(height: 6),
-                          _buildReceiptField('NIM / Mahasiswa', '${widget.appState.nim} • ${widget.appState.studentName}'),
+                          _buildReceiptField(
+                            'NIM / Mahasiswa',
+                            '${widget.appState.nim} • ${widget.appState.studentName}',
+                          ),
                           const SizedBox(height: 6),
-                          _buildReceiptField('Waktu Pengumpulan', DateTime.now().toLocal().toString().split('.')[0]),
+                          _buildReceiptField(
+                            'Waktu Pengumpulan',
+                            DateTime.now().toLocal().toString().split('.')[0],
+                          ),
                           const SizedBox(height: 6),
-                          _buildReceiptField('Checksum SHA-256', widget.appState.originalFileSha256 ?? '-'),
+                          _buildReceiptField(
+                            'Checksum SHA-256',
+                            widget.appState.originalFileSha256 ?? '-',
+                          ),
                         ],
                       ),
                     ),
@@ -259,7 +300,10 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('Selesai & Keluar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Selesai & Keluar',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                   if (_errorMessage != null && !_isFinished) ...[
@@ -272,7 +316,10 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                       ),
                       child: Text(
                         'Cadangan lokal telah tersimpan dengan aman di: ${widget.appState.localBackupPath ?? "Folder Cadangan"}. Jawaban Anda tidak akan hilang.',
-                        style: const TextStyle(fontSize: 12, color: Colors.white70),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white70,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -296,13 +343,21 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
                         OutlinedButton(
                           onPressed: widget.onGoToRecovery,
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppConstants.slateBorder),
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                            side: const BorderSide(
+                              color: AppConstants.slateBorder,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 16,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text('Layar Pemulihan', style: TextStyle(color: AppConstants.textPrimary)),
+                          child: const Text(
+                            'Layar Pemulihan',
+                            style: TextStyle(color: AppConstants.textPrimary),
+                          ),
                         ),
                       ],
                     ),
@@ -341,11 +396,18 @@ class _SubmissionScreenState extends State<SubmissionScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppConstants.textMuted)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppConstants.textMuted),
+        ),
         const SizedBox(height: 1),
         SelectableText(
           value,
-          style: const TextStyle(fontSize: 12, color: Colors.white, fontFamily: 'monospace'),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.white,
+            fontFamily: 'monospace',
+          ),
         ),
       ],
     );

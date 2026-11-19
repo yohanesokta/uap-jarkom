@@ -66,28 +66,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: AppConstants.coralAccent.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppConstants.coralAccent.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.security,
-                      size: 38,
-                      color: AppConstants.coralAccent,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
                 const Text(
-                  'Packet Tracer Exam Client',
+                  'UJIAN AKHIR PRAKTIKUM JARINGAN KOMPUTER',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -98,12 +78,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Sistem Ujian Praktikum Jaringan Komputer Terenkripsi',
+                  'Kerjakan ujian ini dengan jujur dan penuh tanggung jawab. Pastikan semua data yang Anda masukkan benar sebelum melanjutkan.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppConstants.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppConstants.textMuted),
                 ),
                 const SizedBox(height: 32),
                 Container(
@@ -250,23 +227,33 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         TextFormField(
           controller: controller,
           validator: validator,
-          textCapitalization:
-              isUppercase ? TextCapitalization.characters : TextCapitalization.none,
+          textCapitalization: isUppercase
+              ? TextCapitalization.characters
+              : TextCapitalization.none,
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 14),
+            hintStyle: TextStyle(
+              color: Colors.white.withValues(alpha: 0.3),
+              fontSize: 14,
+            ),
             prefixIcon: Icon(icon, color: AppConstants.textMuted, size: 20),
             filled: true,
             fillColor: AppConstants.slateCard,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: AppConstants.slateBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppConstants.coralAccent, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppConstants.coralAccent,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
