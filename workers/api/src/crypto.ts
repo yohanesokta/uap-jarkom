@@ -78,7 +78,7 @@ export async function deriveSessionCryptoKey(
     ["deriveKey"]
   );
 
-  const saltBytes = new TextEncoder().encode(sessionId);
+  const saltBytes = new TextEncoder().encode(sessionId);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
   const infoBytes = new TextEncoder().encode("EXAM_SESSION_KEY");
 
   return await crypto.subtle.deriveKey(

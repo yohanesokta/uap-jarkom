@@ -6,29 +6,50 @@ Aplikasi pendeteksi menginspeksi direktori standar berdasarkan sistem operasi se
 
 ### 1.1 Linux
 - Jalur biner utama:
+  - `/opt/pt/packettracer.AppImage` (Packet Tracer 9.0+)
   - `/opt/pt/bin/PacketTracer`
+  - `/opt/pt/bin/packettracer`
   - `/usr/local/bin/packettracer`
   - `/usr/bin/packettracer`
   - `/usr/bin/PacketTracer`
   - `~/.local/share/cisco/packettracer/bin/PacketTracer`
-- Deteksi via `which packettracer` atau `which PacketTracer`.
+- Deteksi via `which packettracer`, `which PacketTracer`, atau `which cisco-packet-tracer`.
+- **Deteksi Asosiasi Berkas (MIME Association Handler)**:
+  Jika jalur standar tidak ditemukan, sistem memanfaatkan `xdg-mime` atau `gio` untuk mencari aplikasi default pembuka ekstensi `.pka` / `.pkt` (`application/x-pka` dan `application/x-pkt`):
+  1. `xdg-mime query default application/x-pka`
+  2. `gio mime application/x-pka`
+  3. Membaca berkas `.desktop` terkait di `~/.local/share/applications/` atau `/usr/share/applications/`.
+  4. Mengekstrak perintah eksekusi dari baris `Exec=`.
+  5. Memindai entri desktop yang mengandung metadata `application/x-pka` atau nama Packet Tracer.
 
 ### 1.2 Microsoft Windows
 - Lokasi program umum (64-bit & 32-bit):
+  - `C:\Program Files\Cisco Packet Tracer 9.0.1\bin\PacketTracer.exe`
+  - `C:\Program Files\Cisco Packet Tracer 9.0.0\bin\PacketTracer.exe`
   - `C:\Program Files\Cisco Packet Tracer 8.2.2\bin\PacketTracer.exe`
   - `C:\Program Files\Cisco Packet Tracer 8.2.1\bin\PacketTracer.exe`
   - `C:\Program Files\Cisco Packet Tracer 8.2.0\bin\PacketTracer.exe`
   - `C:\Program Files\Cisco Packet Tracer 8.1.1\bin\PacketTracer.exe`
   - `C:\Program Files\Cisco Packet Tracer 8.0\bin\PacketTracer.exe`
   - `C:\Program Files (x86)\Cisco Packet Tracer\bin\PacketTracer.exe`
-- Deteksi via Windows Registry: `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\PacketTracer.exe`.
+- **Deteksi Asosiasi Berkas Windows**:
+  1. Menjalankan `cmd.exe /c assoc .pka` dan `assoc .pkt` untuk mendapatkan ProgID (misal: `PacketTracer.pka`).
+  2. Menjalankan `cmd.exe /c ftype <ProgID>` untuk mengekstrak jalur absolut executable.
+  3. Menginspeksi Windows Registry via PowerShell pada `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\PacketTracer.exe` atau `HKCR\.pka`.
 
 ### 1.3 Apple macOS
 - Berkas Application Bundle:
-  - `/Applications/Cisco Packet Tracer 8.2.2/Cisco Packet Tracer.app/Contents/MacOS/PacketTracer`
   - `/Applications/Cisco Packet Tracer.app/Contents/MacOS/PacketTracer`
+  - `/Applications/Cisco Packet Tracer 9.0.1/Cisco Packet Tracer.app/Contents/MacOS/PacketTracer`
+  - `/Applications/Cisco Packet Tracer 8.2.2/Cisco Packet Tracer.app/Contents/MacOS/PacketTracer`
   - `~/Applications/Cisco Packet Tracer.app/Contents/MacOS/PacketTracer`
-- Perintah eksekusi: `/usr/bin/open -W -n -a "Cisco Packet Tracer" --args <path_to_pka>` atau pemanggilan langsung biner internal bundel.
+- **Deteksi Asosiasi Berkas macOS**:
+  1. Menjalankan kueri AppleScript: `osascript -e 'set appPath to POSIX path of (path to application "Cisco Packet Tracer")'`.
+  2. Menjalankan kueri Spotlight: `mdfind 'kMDItemFSName == "PacketTracer" || kMDItemFSName == "Cisco Packet Tracer.app"'`.
+  3. Mengekstrak biner internal bundel di `Contents/MacOS/PacketTracer`.
+
+### 1.4 Fallback Penentuan Jalur Manual (UI Override)
+Jika seluruh metode otomatis di atas tidak menemukan eksekutabel karena konfigurasi sistem yang sangat khusus (misal: disimpan di folder non-standar atau partisi terpisah), antarmuka klien desktop menyediakan tombol **Tentukan Lokasi Packet Tracer Manual** pada layar persiapan. Mahasiswa dapat memasukkan jalur executable secara langsung, dan sistem akan memvalidasi izin eksekusi berkas tersebut sebelum memulai ujian.
 
 ---
 

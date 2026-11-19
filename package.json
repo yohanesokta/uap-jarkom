@@ -10,5 +10,11 @@
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "wrangler": "^4.164.0"
+  },
+  "dependencies": {
+    "@cloudflare/workerd-linux-64": "^1.20261118.1"
   }
 }

@@ -54,9 +54,14 @@ flowchart TD
     Formatter --> FinalContainer[Kontainer Berkas .examenc]
 ```
 
-## 3. Alur Enkripsi Berkas Jawaban Siswa (Exam Client)
+## 3. Alur Enkripsi dan Dekripsi Berkas Jawaban Siswa (Exam Client & Backend)
 
-Ketika Cisco Packet Tracer ditutup oleh siswa:
+### 3.1 Pembangkitan Kunci Sesi Deterministik (HKDF-SHA256)
+Agar server dapat membuka kunci jawaban mahasiswa secara terpusat tanpa menyimpan kunci sesi di memori atau mengekspos Master Key ke klien:
+- Server menderivasi `SessionKey` 256-bit menggunakan **HKDF-SHA-256** dari `MasterKey` dengan `salt = sessionId` dan `info = "EXAM_SESSION_KEY"`.
+- Kunci sesi ini unik untuk setiap sesi mahasiswa dan dapat direproduksi secara deterministik oleh server kapan saja hanya dengan mengetahui `sessionId`.
+
+### 3.2 Alur Enkripsi di Klien Desktop (Saat Packet Tracer Ditutup)
 1. **Pemeriksaan Integritas Berkas Lokal**:
    Klien membaca berkas `.pka` jawaban yang telah ditulis oleh Packet Tracer dan menghitung hash `SHA-256`.
 2. **Pembangkitan DEK Jawaban Baru**:
@@ -74,12 +79,18 @@ Ketika Cisco Packet Tracer ditutup oleh siswa:
    ```
 4. **Enkripsi Jawaban**:
    Buffer jawaban dienkripsi dengan AES-256-GCM menghasilkan `AnswerCiphertext` dan `AnswerTag`.
-5. **Pembungkusan Kunci dengan Kunci Sesi Peladen**:
-   Klien membungkus `AnswerDEK` menggunakan kunci sesi yang diperoleh dari backend saat otorisasi sesi, sehingga hanya server yang dapat membuka kunci jawaban tersebut.
-6. **Penyimpanan Berkas Cadangan Lokal**:
-   Klien menulis kontainer biner `.examenc` ke dalam folder cadangan lokal yang aman.
-7. **Pengunggahan ke Cloudflare R2**:
-   Kontainer biner diunggah ke backend untuk divalidasi dan disimpan.
+5. **Pembungkusan Kunci dengan Kunci Sesi**:
+   Klien membungkus `AnswerDEK` menggunakan `SessionKey` (AES-GCM dengan nonce 12-byte).
+6. **Penyimpanan Berkas Cadangan Lokal & Pengunggahan**:
+   Klien menulis kontainer biner `.examenc` ke dalam folder cadangan lokal dan mengunggahnya ke Cloudflare R2 melalui backend.
+
+### 3.3 Alur Dekripsi di Dashboard Admin (Saat Mengunduh Jawaban)
+1. Server membaca kontainer biner `.examenc` dari Cloudflare R2.
+2. Server mengambil `sessionId` dari header metadata kontainer biner.
+3. Server menderivasi ulang `SessionKey` menggunakan HKDF-SHA256 dari `MasterKey` dan `sessionId`.
+4. Server membuka kunci `AnswerDEK` menggunakan `SessionKey` (dengan fallback ke `MasterKey`).
+5. Server mendekripsi muatan `.pka` menggunakan `AnswerDEK`, nonce, dan buffer metadata AAD asli (`authenticatedMetadataRaw`).
+6. Berkas `.pka` asli yang siap dibuka di Cisco Packet Tracer dikirimkan langsung sebagai unduhan stream ke peramban dosen.
 
 ## 4. Keamanan Nonce dan Vektor Inisialisasi
 

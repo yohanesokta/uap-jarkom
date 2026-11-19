@@ -87,6 +87,11 @@ export const ExamsView: React.FC = () => {
 
   const handleCreateExamSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!modalClassId) {
+      setModalError('Kelompok kelas belum dipilih. Silakan buat kelompok kelas terlebih dahulu di tab Kelompok Kelas.');
+      return;
+    }
+
     if (!modalFile) {
       setModalError('Silakan pilih berkas .pka soal ujian.');
       return;
@@ -315,18 +320,24 @@ export const ExamsView: React.FC = () => {
                   <label className="block text-xs font-medium text-[#ededed] mb-1">
                     Kelompok Kelas
                   </label>
-                  <select
-                    value={modalClassId}
-                    onChange={(e) => setModalClassId(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-xs rounded-md bg-[#18181b] border border-[#27272a] text-white focus:outline-none focus:border-[#0070F3]"
-                  >
-                    {classes.map((cls) => (
-                      <option key={cls.id} value={cls.id}>
-                        {cls.code} - {cls.name}
-                      </option>
-                    ))}
-                  </select>
+                  {classes.length === 0 ? (
+                    <div className="p-2 text-[11px] rounded bg-red-500/10 border border-red-500/20 text-red-400">
+                      Belum ada kelas. Buka tab Kelompok Kelas untuk menambah kelas.
+                    </div>
+                  ) : (
+                    <select
+                      value={modalClassId}
+                      onChange={(e) => setModalClassId(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 text-xs rounded-md bg-[#18181b] border border-[#27272a] text-white focus:outline-none focus:border-[#0070F3]"
+                    >
+                      {classes.map((cls) => (
+                        <option key={cls.id} value={cls.id}>
+                          {cls.code} - {cls.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div>

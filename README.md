@@ -27,6 +27,7 @@ Sistem manajemen dan pengamanan ujian praktikum jaringan berbasis Cisco Packet T
 │   ├── recovery.md
 │   └── threat-model.md
 ├── package.json
+├── DEPLOY_DAN_PUBLISH.md    # Panduan Lengkap Deploy, Kompilasi & SOP Publikasi Soal
 └── README.md
 ```
 
