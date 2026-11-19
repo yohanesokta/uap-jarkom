@@ -37,13 +37,13 @@ jobs:
           flutter pub get
           flutter build windows --release
 
-      - name: Download 7-Zip Extra SFX Module
+      - name: Download 7-Zip SFX Module
         shell: powershell
         run: |
-          $url = "https://www.7-zip.org/a/7z2409_extra.7z"
-          $output = "$env:TEMP\7z_extra.7z"
-          Invoke-WebRequest -Uri $url -OutFile $output
-          & "7z.exe" x $output "7zSD.sfx" -o"$env:TEMP\sfx" -r
+          $url = "https://www.7-zip.org/a/lzma2301.7z"
+          $output = "$env:TEMP\lzma.7z"
+          Invoke-WebRequest -Uri $url -OutFile $output -UserAgent "Wget"
+          & "7z.exe" e -y $output "bin\7zSD.sfx" -o"$env:TEMP\sfx"
 
       - name: Embed Administrator Execution Level in SFX Stub
         shell: powershell
@@ -61,7 +61,13 @@ jobs:
           </assembly>
           "@
           Set-Content -Path "$env:TEMP\sfx\sfx.manifest" -Value $manifest -Encoding UTF8
-          & mt.exe -manifest "$env:TEMP\sfx\sfx.manifest" -outputresource:"$env:TEMP\sfx\7zSD.sfx;#1"
+          $mtPath = (Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "mt.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1)
+          if (-not $mtPath) {
+            $mtPath = (Get-ChildItem -Path "C:\Program Files\Windows Kits\10\bin" -Recurse -Filter "mt.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1)
+          }
+          if ($mtPath) {
+            & $mtPath -manifest "$env:TEMP\sfx\sfx.manifest" -outputresource:"$env:TEMP\sfx\7zSD.sfx;#1"
+          }
 
       - name: Compress Release Bundle to 7z Archive
         shell: powershell
