@@ -96,7 +96,7 @@ flutter build macos --release
 
 ### 4.4 Otomatisasi Kompilasi via GitHub Actions
 Berkas alur kerja [.github/workflows/build-desktop.yml](file:///.github/workflows/build-desktop.yml) menyediakan build otomatis untuk ketiga platform:
-- **Windows**: Menggunakan 7-Zip Extra SFX (`7zSD.sfx`) dengan konfigurasi `InstallPath="%PROGRAMFILES%\PacketTracerExamClient"` dan auto-run `desktop.exe` dalam satu berkas `.exe` mandiri.
-- **Linux**: Menggunakan `appimagetool` untuk mengemas bundel menjadi berkas portable `.AppImage`.
-- **macOS**: Menggunakan `hdiutil` untuk membuat berkas installer `.dmg` dengan symlink ke direktori `/Applications`.
+- **Windows**: Mengompilasi aplikasi dan mengompresi bundel rilis menjadi `PacketTracerExamClient-Windows.zip`.
+- **Linux**: Menggunakan `appimagetool` untuk mengemas bundel menjadi berkas portable `.AppImage` dengan ikon kustom.
+- **macOS**: Menggunakan `hdiutil` untuk membuat berkas installer `.dmg` dengan symlink ke direktori `/Applications` dan set ikon lengkap.
 - **Rilis Otomatis**: Men-trigger pembuatan GitHub Release otomatis saat tag git `v*` di-push.

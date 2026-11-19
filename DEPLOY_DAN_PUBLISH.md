@@ -185,12 +185,11 @@ Aplikasi akan dihasilkan di:
 
 Telah disediakan alur kerja otomatis pada [.github/workflows/build-desktop.yml](file:///.github/workflows/build-desktop.yml) yang mengompilasi ketiga platform sekaligus dan menghasilkan paket siap pakai:
 
-1. **Microsoft Windows (Single-File SFX Executable)**:
-   - Dibangun menggunakan **7-Zip Extra SFX Module (`7zSD.sfx`)**.
-   - Dilengkapi manifest `requireAdministrator` agar Windows memicu prompt UAC saat dieksekusi.
-   - Otomatis mengekstrak biner ke `%ProgramFiles%\PacketTracerExamClient`.
-   - Otomatis langsung mengeksekusi `desktop.exe` segera setelah ekstraksi selesai.
-   - Hasil berkas: `PacketTracerExamClient-Windows-Setup.exe`.
+1. **Microsoft Windows (Release Zip Bundle)**:
+   - Dikompilasi menggunakan `flutter build windows --release`.
+   - Seluruh berkas rilis (`desktop.exe`, pustaka `.dll`, dan folder `data/`) dikompresi ke dalam berkas ZIP siap pakai.
+   - Administrator dapat mendistribusikannya langsung atau mengonfigurasi installer (seperti Inno Setup atau NSIS) secara mandiri.
+   - Hasil berkas: `PacketTracerExamClient-Windows.zip`.
 
 2. **Linux (AppImage Portable)**:
    - Dikemas menggunakan `appimagetool` resmi dengan struktur `AppDir`.

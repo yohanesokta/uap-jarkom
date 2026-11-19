@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build-windows:
-    name: Build Windows Single-File SFX Executable
+    name: Build Windows Release Bundle (Zip)
     runs-on: windows-latest
 
     steps:
@@ -37,60 +37,20 @@ jobs:
           flutter pub get
           flutter build windows --release
 
-      - name: Download 7-Zip SFX Module
-        shell: powershell
-        run: |
-          $url = "https://www.7-zip.org/a/lzma2301.7z"
-          $output = "$env:TEMP\lzma.7z"
-          Invoke-WebRequest -Uri $url -OutFile $output -UserAgent "Wget"
-          & "7z.exe" e -y $output "bin\7zSD.sfx" -o"$env:TEMP\sfx"
-
-      - name: Compress Release Bundle to 7z Archive
+      - name: Compress Windows Release Bundle to Zip
         shell: powershell
         run: |
           $releaseDir = "apps/desktop/build/windows/x64/runner/Release"
           if (-not (Test-Path $releaseDir)) {
             $releaseDir = "apps/desktop/build/windows/runner/Release"
           }
-          & "7z.exe" a -mx9 -r "$env:TEMP\app.7z" "$releaseDir\*"
+          Compress-Archive -Path "$releaseDir\*" -DestinationPath "PacketTracerExamClient-Windows.zip" -Force
 
-      - name: Assemble Self-Extracting Windows Executable
-        shell: powershell
-        run: |
-          $configLines = @(
-            ";!@Install@!UTF-8!",
-            'Title="Packet Tracer Exam Client"',
-            'InstallPath="%PROGRAMFILES%\\PacketTracerExamClient"',
-            'OverwriteMode="1"',
-            'RunProgram="desktop.exe"',
-            'MiscFlags="4"',
-            ";!@InstallEnd@!"
-          )
-          [System.IO.File]::WriteAllLines("$env:TEMP\config.txt", $configLines, [System.Text.Encoding]::UTF8)
-
-          $outputFile = "$PWD\PacketTracerExamClient-Windows-Setup.exe"
-          $inputFiles = @("$env:TEMP\sfx\7zSD.sfx", "$env:TEMP\config.txt", "$env:TEMP\app.7z")
-          $outStream = [System.IO.File]::Create($outputFile)
-          try {
-            foreach ($file in $inputFiles) {
-              $inputStream = [System.IO.File]::OpenRead($file)
-              try {
-                $inputStream.CopyTo($outStream)
-              }
-              finally {
-                $inputStream.Dispose()
-              }
-            }
-          }
-          finally {
-            $outStream.Dispose()
-          }
-
-      - name: Upload Windows Setup Artifact
+      - name: Upload Windows Zip Artifact
         uses: actions/upload-artifact@v4
         with:
           name: PacketTracerExamClient-Windows
-          path: PacketTracerExamClient-Windows-Setup.exe
+          path: PacketTracerExamClient-Windows.zip
           if-no-files-found: error
 
   build-linux:
@@ -130,8 +90,8 @@ jobs:
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
           cp -r "$BUNDLE_DIR"/* AppDir/
-          cp apps/desktop/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png AppDir/desktop.png
-          cp apps/desktop/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png AppDir/usr/share/icons/hicolor/256x256/apps/desktop.png
+          cp apps/icon.png AppDir/desktop.png
+          cp apps/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/desktop.png
 
           cat << 'EOF' > AppDir/desktop.desktop
           [Desktop Entry]
@@ -233,7 +193,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            PacketTracerExamClient-Windows-Setup.exe
+            PacketTracerExamClient-Windows.zip
             PacketTracerExamClient-Linux-x86_64.AppImage
             PacketTracerExamClient-macOS.dmg
           generate_release_notes: true
