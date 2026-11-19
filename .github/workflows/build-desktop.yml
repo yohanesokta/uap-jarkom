@@ -45,30 +45,6 @@ jobs:
           Invoke-WebRequest -Uri $url -OutFile $output -UserAgent "Wget"
           & "7z.exe" e -y $output "bin\7zSD.sfx" -o"$env:TEMP\sfx"
 
-      - name: Embed Administrator Execution Level in SFX Stub
-        shell: powershell
-        run: |
-          $manifest = @"
-          <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-          <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-            <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-              <security>
-                <requestedPrivileges>
-                  <requestedExecutionLevel level="requireAdministrator" uiAccess="false"/>
-                </requestedPrivileges>
-              </security>
-            </trustInfo>
-          </assembly>
-          "@
-          Set-Content -Path "$env:TEMP\sfx\sfx.manifest" -Value $manifest -Encoding UTF8
-          $mtPath = (Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "mt.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1)
-          if (-not $mtPath) {
-            $mtPath = (Get-ChildItem -Path "C:\Program Files\Windows Kits\10\bin" -Recurse -Filter "mt.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1)
-          }
-          if ($mtPath) {
-            & $mtPath -manifest "$env:TEMP\sfx\sfx.manifest" -outputresource:"$env:TEMP\sfx\7zSD.sfx;#1"
-          }
-
       - name: Compress Release Bundle to 7z Archive
         shell: powershell
         run: |
@@ -81,15 +57,16 @@ jobs:
       - name: Assemble Self-Extracting Windows Executable
         shell: powershell
         run: |
-          $config = @'
-          ;!@Install@!UTF-8!
-          Title="Packet Tracer Exam Client"
-          InstallPath="%PROGRAMFILES%\\PacketTracerExamClient"
-          OverwriteMode="1"
-          RunProgram="desktop.exe"
-          ;!@InstallEnd@!
-          '@
-          [System.IO.File]::WriteAllText("$env:TEMP\config.txt", $config, [System.Text.Encoding]::UTF8)
+          $configLines = @(
+            ";!@Install@!UTF-8!",
+            'Title="Packet Tracer Exam Client"',
+            'InstallPath="%PROGRAMFILES%\\PacketTracerExamClient"',
+            'OverwriteMode="1"',
+            'RunProgram="desktop.exe"',
+            'MiscFlags="4"',
+            ";!@InstallEnd@!"
+          )
+          [System.IO.File]::WriteAllLines("$env:TEMP\config.txt", $configLines, [System.Text.Encoding]::UTF8)
 
           $outputFile = "$PWD\PacketTracerExamClient-Windows-Setup.exe"
           $inputFiles = @("$env:TEMP\sfx\7zSD.sfx", "$env:TEMP\config.txt", "$env:TEMP\app.7z")
